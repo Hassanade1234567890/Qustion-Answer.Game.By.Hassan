@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ultimate Quiz Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    color: #222;
+    text-align: center;
+    padding: 40px;
+    transition: background-color 0.5s, color 0.5s;
+  }
+  body.dark {
+    background-color: #121212;
+    color: #eee;
+  }
+  .question-box {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    transition: background 0.5s, color 0.5s;
+  }
+  body.dark .question-box {
+    background: #1e1e1e;
+    color: #eee;
+  }
+  .option {
+    background-color: #e0e0e0;
+    padding: 12px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  .option:hover {
+    background-color: #4caf50;
+    color: white;
+  }
+  .option.correct {
+    background-color: #4caf50 !important;
+    color: white;
+  }
+  #level, #timer {
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  .result {
+    font-size: 20px;
+    margin-top: 15px;
+    min-height: 24px;
+  }
+  #score-summary {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+  #darkModeBtn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #4caf50;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  #musicControls {
+    margin-top: 15px;
+  }
+  #startScreen {
+    max-width: 400px;
+    margin: auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  }
+  body.dark #startScreen {
+    background: #1e1e1e;
+    color: #eee;
+  }
+  input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    width: 80%;
+    margin: 15px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  button {
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<button id="darkModeBtn">Dark Mode</button>
+
+<div id="startScreen">
+  <h1>Welcome to Ultimate Quiz Game</h1>
+  <p>Please enter your name to start:</p>
+  <input type="text" id="usernameInput" placeholder="Your name here" />
+  <br />
+  <button id="startBtn">Start Game</button>
+</div>
+
+<div class="question-box" style="display:none;">
+  <div id="level"></div>
+  <div id="timer">⏱️ Time Left: 10s</div>
+  <div id="question"></div>
+  <div id="options" class="options"></div>
+  <div id="result" class="result"></div>
+  <div id="score-summary"></div>
+  <div id="musicControls">
+    <button id="musicToggle">Pause Music 🎵</button>
+  </div>
+</div>
+
+<!-- Audio -->
+<audio id="bg-music" src="c:\Users\dell\Downloads\fun-upbeat-background-music-366059 (2).mp3" loop></audio>
+<audio id="correct-sound" src="c:\Users\dell\Downloads\yay-6326.mp3"></audio>
+<audio id="wrong-sound" src="c:\Users\dell\Downloads\human-voice-saying-oh-no-301694.mp3"></audio>
+
+<script>
+  const easyQuestions = [
+    { question: "What is the capital of France?", options: ["Paris", "London", "Berlin", "Rome"], correct: "Paris" },
+    { question: "2 + 2 = ?", options: ["3", "4", "5", "6"], correct: "4" },
+    { question: "Color of bananas?", options: ["Red", "Blue", "Yellow", "Green"], correct: "Yellow" },
+    { question: "Who is the biggest YouTuber?", options: ["MrBeast", "PewDiePie", "T-Series", "5MC"], correct: "MrBeast" },
+    { question: "Which animal is most faithful?", options: ["Cat", "Dog", "Parrot", "Fish"], correct: "Dog" },
+    { question: "Powerful country?", options: ["USA", "India", "China", "Russia"], correct: "USA" },
+    { question: "Planet closest to sun?", options: ["Venus", "Earth", "Mars", "Mercury"], correct: "Mercury" },
+    { question: "Gas we breathe in?", options: ["Oxygen", "Carbon", "Hydrogen", "Helium"], correct: "Oxygen" },
+    { question: "5 + 5 = ?", options: ["10", "9", "11", "8"], correct: "10" },
+    { question: "Great Wall is in?", options: ["India", "Japan", "China", "USA"], correct: "China" },
+    { question: "Spider has how many legs?", options: ["6", "8", "10", "12"], correct: "8" },
+    { question: "Largest planet?", options: ["Earth", "Jupiter", "Mars", "Saturn"], correct: "Jupiter" },
+    { question: "King of jungle?", options: ["Elephant", "Tiger", "Lion", "Cheetah"], correct: "Lion" },
+    { question: "Currency of Iran?", options: ["Rial", "Dollar", "Rupee", "Euro"], correct: "Rial" },
+    { question: "Currency of Pakistan?", options: ["Rupee", "Dollar", "Peso", "Yen"], correct: "Rupee" }
+  ];
+
+  const hardQuestions = [
+    { question: "Smallest continent?", options: ["Australia", "Europe", "Antarctica", "Asia"], correct: "Australia" },
+    { question: "Largest desert?", options: ["Sahara", "Thar", "Gobi", "Kalahari"], correct: "Sahara" },
+    { question: "Fastest bird?", options: ["Falcon", "Eagle", "Sparrow", "Penguin"], correct: "Falcon" },
+    { question: "Leap year days?", options: ["365", "364", "366", "360"], correct: "366" },
+    { question: "Where is Mount Everest?", options: ["India", "China", "Nepal", "Pakistan"], correct: "Nepal" },
+    { question: "Largest bone in human?", options: ["Femur", "Tibia", "Skull", "Spine"], correct: "Femur" },
+    { question: "Who painted Mona Lisa?", options: ["Da Vinci", "Picasso", "Van Gogh", "Rembrandt"], correct: "Da Vinci" },
+    { question: "Chemical symbol for gold?", options: ["Gd", "Au", "Ag", "Pt"], correct: "Au" },
+    { question: "Light travels fastest in?", options: ["Air", "Glass", "Vacuum", "Water"], correct: "Vacuum" },
+    { question: "Inventor of telephone?", options: ["Bell", "Newton", "Tesla", "Edison"], correct: "Bell" },
+    { question: "Binary of 5?", options: ["101", "110", "100", "111"], correct: "101" },
+    { question: "Most spoken language?", options: ["English", "Spanish", "Mandarin", "Hindi"], correct: "Mandarin" },
+    { question: "Sun is a?", options: ["Planet", "Comet", "Star", "Asteroid"], correct: "Star" },
+    { question: "Currency of USA?", options: ["Dollar", "Euro", "Rupee", "Yen"], correct: "Dollar" },
+    { question: "Currency of Brazil?", options: ["Peso", "Real", "Dollar", "Rupee"], correct: "Real" },
+    { question: "Currency of China?", options: ["Yuan", "Yen", "Won", "Rupee"], correct: "Yuan" },
+    { question: "Currency of South Korea?", options: ["Won", "Yen", "Dollar", "Euro"], correct: "Won" },
+    { question: "Python is a?", options: ["Snake", "Language", "Both", "Bird"], correct: "Both" },
+    { question: "Largest ocean?", options: ["Atlantic", "Pacific", "Indian", "Arctic"], correct: "Pacific" },
+    { question: "Capital of Australia?", options: ["Sydney", "Melbourne", "Canberra", "Perth"], correct: "Canberra" },
+    { question: "Fastest land animal?", options: ["Lion", "Tiger", "Cheetah", "Leopard"], correct: "Cheetah" },
+    { question: "Chemical symbol for Iron?", options: ["Fe", "Ir", "I", "In"], correct: "Fe" },
+    { question: "Who wrote '1984'?", options: ["Orwell", "Shakespeare", "Hemingway", "Tolkien"], correct: "Orwell" },
+    { question: "Largest mammal?", options: ["Elephant", "Blue Whale", "Giraffe", "Hippopotamus"], correct: "Blue Whale" },
+    { question: "Capital of Canada?", options: ["Toronto", "Vancouver", "Montreal", "Ottawa"], correct: "Ottawa" },
+    { question: "Speed of light?", options: ["300,000 km/s", "150,000 km/s", "200,000 km/s", "100,000 km/s"], correct: "300,000 km/s" },
+    { question: "H2O is?", options: ["Oxygen", "Water", "Hydrogen", "Helium"], correct: "Water" },
+    { question: "Currency of Japan?", options: ["Yuan", "Yen", "Won", "Dollar"], correct: "Yen" },
+    { question: "Largest volcano?", options: ["Mauna Loa", "Mount Fuji", "Mount St. Helens", "Krakatoa"], correct: "Mauna Loa" }
+  ];
+
+  const quizData = [...easyQuestions, ...hardQuestions];
+  let currentIndex = 0;
+  let correctAnswers = 0;
+  let wrongAnswers = 0;
+  let timer, timeLeft = 10;
+  let answered = false;
+  let username = '';
+
+  const startScreen = document.getElementById('startScreen');
+  const questionBox = document.querySelector('.question-box');
+  const darkModeBtn = document.getElementById('darkModeBtn');
+  const musicToggleBtn = document.getElementById('musicToggle');
+  const bgMusic = document.getElementById('bg-music');
+  const correctSound = document.getElementById('correct-sound');
+  const wrongSound = document.getElementById('wrong-sound');
+
+  darkModeBtn.onclick = () => {
+    document.body.classList.toggle('dark');
+    darkModeBtn.innerText = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+  };
+
+  musicToggleBtn.onclick = () => {
+    if (bgMusic.paused) {
+      bgMusic.play();
+      musicToggleBtn.innerText = 'Pause Music 🎵';
+    } else {
+      bgMusic.pause();
+      musicToggleBtn.innerText = 'Play Music 🎵';
+    }
+  };
+
+  document.getElementById('startBtn').onclick = () => {
+    const input = document.getElementById('usernameInput');
+    if (input.value.trim() === '') {
+      alert('Please enter your name to start!');
+      return;
+    }
+    username = input.value.trim();
+    startScreen.style.display = 'none';
+    questionBox.style.display = 'block';
+    bgMusic.play();
+    loadQuestion();
+  };
+
+  function startTimer() {
+    timeLeft = 10;
+    document.getElementById('timer').innerText = `⏱️ Time Left: ${timeLeft}s`;
+    timer = setInterval(() => {
+      timeLeft--;
+      document.getElementById('timer').innerText = `⏱️ Time Left: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        checkAnswer(null);
+      }
+    }, 1000);
+  }
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function loadQuestion() {
+    if (currentIndex >= quizData.length) {
+      document.getElementById('question').innerText = `🎉 Game Over, ${username}!`;
+      document.getElementById('options').innerHTML = '';
+      document.getElementById('level').innerText = '';
+      document.getElementById('timer').innerText = '';
+      document.getElementById('result').innerText = '';
+      document.getElementById('score-summary').innerText =
+        `✅ Correct: ${correctAnswers} | ❌ Wrong: ${wrongAnswers}`;
+      return;
+    }
+
+    answered = false;
+    const q = quizData[currentIndex];
+    document.getElementById('level').innerText = `Level ${currentIndex + 1} / ${quizData.length}`;
+    document.getElementById('question').innerText = q.question;
+    const optionsDiv = document.getElementById('options');
+    optionsDiv.innerHTML = '';
+    document.getElementById('result').innerText = '';
+    document.getElementById('score-summary').innerText = `Player: ${username} | Correct: ${correctAnswers} | Wrong: ${wrongAnswers}`;
+
+    const shuffled = shuffle([...q.options]);
+    shuffled.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerText = opt;
+      btn.onclick = () => checkAnswer(opt);
+      optionsDiv.appendChild(btn);
+    });
+
+    startTimer();
+  }
+
+  function checkAnswer(selected) {
+    if (answered) return;
+    answered = true;
+    clearInterval(timer);
+    const correct = quizData[currentIndex].correct;
+    const resultDiv = document.getElementById('result');
+    const buttons = document.querySelectorAll('.option');
+
+    buttons.forEach(btn => {
+      if (btn.innerText === correct) {
+        btn.classList.add('correct');
+      }
+      btn.disabled = true;
+    });
+
+    if (selected === correct) {
+      resultDiv.innerText = "Correct! ✅";
+      resultDiv.style.color = 'green';
+      correctSound.play();
+      correctAnswers++;
+    } else {
+      resultDiv.innerText = "Wrong! ❌";
+      resultDiv.style.color = 'red';
+      wrongSound.play();
+      wrongAnswers++;
+    }
+
+    document.getElementById('score-summary').innerText = `Player: ${username} | Correct: ${correctAnswers} | Wrong: ${wrongAnswers}`;
+
+    setTimeout(() => {
+      currentIndex++;
+      loadQuestion();
+    }, 1500);
+  }
+</script>
+
+</body>
+</html>
